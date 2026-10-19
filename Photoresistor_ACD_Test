@@ -1,0 +1,47 @@
+const byte SENSOR_PIN = A2;
+const int NUM_READINGS = 20;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(SENSOR_PIN, INPUT);
+
+  // UNO R4: use a 0-1023 ADC range.
+  #if defined(ARDUINO_ARCH_RENESAS_UNO)
+    analogReadResolution(10);
+  #endif
+
+  // LEDs remain off during this sensor-only test.
+  pinMode(6, OUTPUT);
+  pinMode(7, OUTPUT);
+  digitalWrite(6, LOW);
+  digitalWrite(7, LOW);
+
+  Serial.println("Photoresistor ADC test - A2");
+}
+
+void loop() {
+  long total = 0;
+  int minimum = 1023;
+  int maximum = 0;
+
+  for (int i = 0; i < NUM_READINGS; i++) {
+    int reading = analogRead(SENSOR_PIN);
+    total += reading;
+
+    if (reading < minimum) minimum = reading;
+    if (reading > maximum) maximum = reading;
+
+    delay(5);
+  }
+
+  float average = total / (float)NUM_READINGS;
+
+  Serial.print("Average ADC: ");
+  Serial.print(average, 1);
+  Serial.print(" | Min: ");
+  Serial.print(minimum);
+  Serial.print(" | Max: ");
+  Serial.println(maximum);
+
+  delay(400);
+}
