@@ -1,0 +1,39 @@
+const byte LED_D7 = 7;
+const byte LED_D6 = 6;
+
+const unsigned long LED_ON_MS = 1500;
+const unsigned long DARK_MS = 500;
+
+void lightsOff() {
+  digitalWrite(LED_D7, LOW);
+  digitalWrite(LED_D6, LOW);
+}
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(LED_D7, OUTPUT);
+  pinMode(LED_D6, OUTPUT);
+  lightsOff();
+
+  Serial.println("LED sequence test");
+}
+
+void loop() {
+  lightsOff();
+  digitalWrite(LED_D7, HIGH);
+  Serial.println("D7 ON — D6 OFF");
+  delay(LED_ON_MS);
+
+  lightsOff();
+  Serial.println("Both LEDs OFF");
+  delay(DARK_MS);
+
+  digitalWrite(LED_D6, HIGH);
+  Serial.println("D6 ON — D7 OFF");
+  delay(LED_ON_MS);
+
+  lightsOff();
+  Serial.println("Both LEDs OFF");
+  delay(DARK_MS);
+}
