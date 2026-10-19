@@ -1,0 +1,115 @@
+const byte SENSOR_PIN = A2;
+const byte LED_D7 = 7;
+const byte LED_D6 = 6;
+
+const int NUM_READINGS = 30;
+const unsigned long SETTLE_MS = 1500;
+const unsigned long READ_INTERVAL_MS = 50;
+
+void lightsOff() {
+  digitalWrite(LED_D7, LOW);
+  digitalWrite(LED_D6, LOW);
+}
+
+float measureADC(const char* label) {
+  delay(SETTLE_MS);
+
+  long total = 0;
+  int minimum = 1023;
+  int maximum = 0;
+
+  for (int i = 0; i < NUM_READINGS; i++) {
+    int reading = analogRead(SENSOR_PIN);
+    total += reading;
+
+    if (reading < minimum) minimum = reading;
+    if (reading > maximum) maximum = reading;
+
+    Serial.print(label);
+    Serial.print(" | Reading ");
+    Serial.print(i + 1);
+    Serial.print(": ");
+    Serial.println(reading);
+
+    delay(READ_INTERVAL_MS);
+  }
+
+  float average = total / (float)NUM_READINGS;
+
+  Serial.print(label);
+  Serial.print(" | AVERAGE: ");
+  Serial.print(average, 2);
+  Serial.print(" | MIN: ");
+  Serial.print(minimum);
+  Serial.print(" | MAX: ");
+  Serial.println(maximum);
+  Serial.println();
+
+  return average;
+}
+
+void runMeasurement() {
+  Serial.println("=== Stationary optical test ===");
+
+  lightsOff();
+  float background = measureADC("LEDs OFF");
+
+  digitalWrite(LED_D7, HIGH);
+  float d7 = measureADC("D7 ONLY");
+
+  lightsOff();
+  digitalWrite(LED_D6, HIGH);
+  float d6 = measureADC("D6 ONLY");
+
+  lightsOff();
+
+  Serial.println("=== SUMMARY ===");
+
+  Serial.print("Background ADC: ");
+  Serial.println(background, 2);
+
+  Serial.print("D7 ADC: ");
+  Serial.println(d7, 2);
+
+  Serial.print("D6 ADC: ");
+  Serial.println(d6, 2);
+
+  Serial.print("D7 minus background: ");
+  Serial.println(d7 - background, 2);
+
+  Serial.print("D6 minus background: ");
+  Serial.println(d6 - background, 2);
+
+  Serial.println("Finished. Both LEDs OFF.");
+  Serial.println("Send r to measure again.");
+}
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(SENSOR_PIN, INPUT);
+  pinMode(LED_D7, OUTPUT);
+  pinMode(LED_D6, OUTPUT);
+  lightsOff();
+
+  #if defined(ARDUINO_ARCH_RENESAS_UNO)
+    analogReadResolution(10);
+  #endif
+
+  Serial.println("Photoresistor: A2");
+  Serial.println("No servo movement.");
+  Serial.println("Send r to measure OFF, D7, then D6.");
+}
+
+void loop() {
+  if (Serial.available()) {
+    char command = Serial.read();
+
+    if (command == 'r') {
+      runMeasurement();
+
+      // Discard commands received during measurement.
+      while (Serial.available()) Serial.read();
+    }
+  }
+}
